@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import API from "@/services/api";
 import Link from "next/link";
+import PropertySearchHero from "@/components/property/PropertySearchHero";
 import PropertyFilters from "@/components/property/PropertyFilters";
-import PropertyCard from "@/components/property/PropertyCard"
+import PropertyCard from "@/components/property/PropertyCard";
+import PropertyCardSkeleton from "@/components/property/PropertyCardSkeleton";
 
 
 export default function PropertiesPage() {
     const searchParams = useSearchParams();
   
 const [properties, setProperties] = useState([]);
+const [loading, setLoading] = useState(false);
 
 const [page, setPage] = useState(1);
 
@@ -45,12 +48,12 @@ const [filters, setFilters] = useState({
     fetchProperties();
   }, [filters, page]);
 
-
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
     try {
+      setLoading(true);
       const params = {};
       params.page = page;
-      params.limit = 6;
+      params.limit = 12;
 
       if (filters.city) params.city = filters.city;
       if (filters.property_type)
@@ -74,71 +77,113 @@ const [filters, setFilters] = useState({
       setProperties(res.data.properties);
 
       setPagination({
-  totalPages: res.data.pagination.totalPages,
-  hasNextPage: res.data.pagination.hasNextPage,
-  hasPreviousPage: res.data.pagination.hasPreviousPage,
-});
-
+        totalPages: res.data.pagination.totalPages,
+        hasNextPage: res.data.pagination.hasNextPage,
+        hasPreviousPage: res.data.pagination.hasPreviousPage,
+      });
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [page, filters]);
+
+  const handlePrevious = useCallback(() => {
+    setPage((prev) => Math.max(prev - 1, 1));
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setPage((prev) => prev + 1);
+  }, []);
 
   return (
-    <div className="py-10">
-
-      <h1 className="text-4xl font-bold mb-8">
-        All Properties
-      </h1>
-
-      <PropertyFilters
+    <>
+      <PropertySearchHero
         filters={filters}
         setFilters={setFilters}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="bg-white py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Main content + Sidebar */}
+          <div className="grid gap-8 lg:grid-cols-4">
+            {/* Sidebar Filters - Left */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-20">
+                <PropertyFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                />
+              </div>
+            </div>
 
-        {properties.map((property) => (
-            <PropertyCard
-            key={property.id}
-            property={property}
-            />
-            ))}
+            {/* Main Content */}
+            <div className="lg:col-span-3">
+              {/* Results Header */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-slate-600">
+                  Showing {properties.length} properties
+                </p>
+              </div>
 
-    <div className="flex justify-center items-center gap-4 mt-10">
+              {/* Property Grid */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {loading ? (
+                  <>
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <PropertyCardSkeleton key={`skeleton-${i}`} />
+                    ))}
+                  </>
+                ) : properties.length > 0 ? (
+                  properties.map((property) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full py-12 text-center">
+                    <p className="text-slate-600">No properties found. Try adjusting your filters.</p>
+                  </div>
+                )}
+              </div>
 
-  <button
-    onClick={() => setPage((prev) => prev - 1)}
-    disabled={!pagination.hasPreviousPage}
-    className={`px-5 py-2 rounded-lg ${
-      pagination.hasPreviousPage
-        ? "bg-blue-600 text-white hover:bg-blue-700"
-        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-    }`}
-  >
-    Previous
-  </button>
+              {/* Pagination */}
+              {!loading && properties.length > 0 && (
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <button
+                    onClick={handlePrevious}
+                    disabled={!pagination.hasPreviousPage}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                      pagination.hasPreviousPage
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "cursor-not-allowed bg-slate-200 text-slate-500"
+                    }`}
+                  >
+                    Previous
+                  </button>
 
-  <span className="font-semibold">
-    Page {page} of {pagination.totalPages}
-  </span>
+                  <span className="px-4 py-2 text-sm font-medium text-slate-700">
+                    Page {page} of {pagination.totalPages}
+                  </span>
 
-  <button
-    onClick={() => setPage((prev) => prev + 1)}
-    disabled={!pagination.hasNextPage}
-    className={`px-5 py-2 rounded-lg ${
-      pagination.hasNextPage
-        ? "bg-blue-600 text-white hover:bg-blue-700"
-        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-    }`}
-  >
-    Next
-  </button>
-
-</div>
-    
-    </div>
-    
-    </div>
+                  <button
+                    onClick={handleNext}
+                    disabled={!pagination.hasNextPage}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                      pagination.hasNextPage
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "cursor-not-allowed bg-slate-200 text-slate-500"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

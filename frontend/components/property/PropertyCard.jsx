@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { memo } from "react";
 
-export default function PropertyCard({ property }) {
+function PropertyCard({ property }) {
   const image =
     property.image_url &&
     !property.image_url.includes("example.com")
@@ -11,92 +12,88 @@ export default function PropertyCard({ property }) {
     property.property_type === "Land" ||
     property.property_type === "Plot";
 
+  const tag =
+    property.property_type === "Apartment"
+      ? "For Rent"
+      : property.property_type === "Villa"
+      ? "For Sale"
+      : property.property_type === "House"
+      ? "For Sale"
+      : property.property_type === "Land"
+      ? "DTCP Approved"
+      : "Featured";
+
+  const rating = property.rating ?? (4.2 + (property.id % 8) * 0.1).toFixed(1);
+
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <Link href={`/properties/${property.id}`}>
+      <article className="group overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_-8px_rgba(15,23,42,0.4)] cursor-pointer">
+        {/* Image Container */}
+        <div className="relative overflow-hidden bg-slate-100">
+          <img
+            src={image}
+            alt={property.title}
+            loading="lazy"
+            decoding="async"
+            className="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
 
-      {/* Image */}
-      <div className="relative">
-
-        <img
-          src={image}
-          alt={property.title}
-          className="w-full h-56 object-cover"
-        />
-
-        {/* Rating */}
-        <div className="absolute top-4 right-4 bg-white px-3 py-2 rounded-xl shadow-md font-semibold flex items-center gap-1">
-          ⭐  {property.rating ?? (4.2 + (property.id % 8) * 0.1).toFixed(1)}
-        </div>
-
-        {/* Listing Type */}
-        <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-          {
-property.property_type === "Apartment" ? "For Rent" :
-property.property_type === "Villa" ? "For Sale" :
-property.property_type === "House" ? "For Sale" :
-property.property_type === "Land" ? "DTCP Approved" :
-"Featured"
-}
-        </div>
-
-        {/* Verified Badge */}
-        {property.verified && (
-          <div className="absolute bottom-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-            ✓ Verified
+          {/* Tags */}
+          <div className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+            {tag}
           </div>
-        )}
 
-      </div>
+          <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-amber-600 shadow-sm">
+            ★ {rating}
+          </div>
 
-      {/* Content */}
-      <div className="p-6">
-
-        {/* Location */}
-        <p className="flex items-center gap-2 text-sm text-gray-500">
-          📍 {property.city}
-        </p>
-
-        {/* Title */}
-        <h2 className="mt-2 text-2xl font-bold text-gray-900 leading-tight">
-          {property.title}
-        </h2>
-
-        {/* Property Details */}
-        <div className="flex items-center gap-6 mt-4 text-gray-600">
-
-          {!isLand ? (
-            <span>🛏 {property.bedrooms} BHK</span>
-          ) : (
-            <span>🌳 Plot Area</span>
+          {property.verified && (
+            <div className="absolute bottom-3 left-3 rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
+              ✓ Verified
+            </div>
           )}
-
-          <span>📐 {property.sqft} sq.ft</span>
-
         </div>
 
-        {/* Price & Status */}
-        <div className="flex items-center justify-between mt-5">
+        {/* Content */}
+        <div className="p-4">
+          {/* Location */}
+          <p className="text-xs font-medium text-slate-500 truncate">
+            📍 {property.city}
+          </p>
 
-          <h3 className="text-2xl font-bold text-blue-600 whitespace-nowrap">
-            ₹ {Number(property.price).toLocaleString("en-IN")}
+          {/* Title */}
+          <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold text-slate-900 leading-snug">
+            {property.title}
           </h3>
 
-          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-semibold">
-            {property.status || "Ready to Move"}
-          </span>
+          {/* Details */}
+          <div className="mt-3 flex items-center gap-3 text-xs text-slate-600">
+            {!isLand ? (
+              <span className="rounded bg-slate-100 px-2 py-0.5">{property.bedrooms} BHK</span>
+            ) : (
+              <span className="rounded bg-slate-100 px-2 py-0.5">Plot</span>
+            )}
+            <span className="rounded bg-slate-100 px-2 py-0.5">{property.sqft} sq.ft</span>
+          </div>
 
+          {/* Footer */}
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+            <div>
+              <p className="text-xs text-slate-500">Starting</p>
+              <p className="font-bold text-slate-900">
+                ₹{(Number(property.price) / 10000000).toFixed(1)}Cr
+              </p>
+            </div>
+
+            <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+              {property.status || "Ready to Move"}
+            </span>
+          </div>
         </div>
-
-        {/* View Details Button */}
-        <Link
-          href={`/properties/${property.id}`}
-          className="block w-full mt-6 py-2 rounded-xl bg-blue-600 text-white text-center font-semibold hover:bg-blue-700 transition"
-        >
-          View Details
-        </Link>
-
-      </div>
-
-    </div>
+      </article>
+    </Link>
   );
 }
+
+export default memo(PropertyCard);
