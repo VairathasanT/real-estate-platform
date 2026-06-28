@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* ===========================================
+   Design System - Real Estate Platform
+=========================================== */
+
+:root {
+  /* Colors */
+  --background: #f8fafc;
+  --foreground: #111827;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+
+  --secondary: #0f172a;
+
+  --card: #ffffff;
+
+  --border: #e5e7eb;
+
+  --muted: #6b7280;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Radius */
+  --radius: 16px;
+
+  /* Shadow */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+@theme inline {
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+
+  --color-secondary: var(--secondary);
+
+  --color-card: var(--card);
+
+  --color-border: var(--border);
+
+  --color-muted: var(--muted);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* html {
+  scroll-behavior: smooth;
+} */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+}
+
+/* Better Images */
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Better Buttons */
+
+button {
+  cursor: pointer;
+  transition: all .25s ease;
+}
+
+/* Better Links */
+
+a {
+  text-decoration: none;
+  transition: all .25s ease;
+}
