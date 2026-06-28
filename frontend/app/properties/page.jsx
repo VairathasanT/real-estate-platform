@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import API from "@/services/api";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import PropertyCardSkeleton from "@/components/property/PropertyCardSkeleton";
 import { mockProperties, mockPagination } from "@/lib/mockData";
 
 
-export default function PropertiesPage() {
+function PropertiesContent() {
     const searchParams = useSearchParams();
   
 const [properties, setProperties] = useState([]);
@@ -220,5 +220,17 @@ const [filters, setFilters] = useState({
         </div>
       </div>
     </>
+  );
+}
+
+export default function PropertiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-slate-500 text-sm">Loading properties...</p>
+      </div>
+    }>
+      <PropertiesContent />
+    </Suspense>
   );
 }
