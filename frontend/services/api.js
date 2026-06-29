@@ -24,16 +24,17 @@ API.interceptors.response.use(
 
   async (error) => {
     const originalRequest = error.config;
+    const refreshToken = localStorage.getItem("refreshToken");
 
     if (
       error.response?.status === 401 &&
+      refreshToken &&
+      originalRequest &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
           {

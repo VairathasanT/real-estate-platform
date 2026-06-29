@@ -38,11 +38,10 @@ export default function InquiryForm({ propertyId }) {
         message: "",
       });
     } catch (err) {
-  console.log("Status:", err.response?.status);
-  console.log("Response:", err.response?.data);
-
-  alert(err.response?.data?.message || "Failed to send inquiry.");
-}
+      alert(err.response?.data?.message || "Failed to send inquiry.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

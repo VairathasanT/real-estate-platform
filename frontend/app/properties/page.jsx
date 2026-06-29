@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import API from "@/services/api";
-import Link from "next/link";
 import PropertySearchHero from "@/components/property/PropertySearchHero";
 import PropertyFilters from "@/components/property/PropertyFilters";
 import PropertyCard from "@/components/property/PropertyCard";
@@ -36,21 +35,6 @@ const [filters, setFilters] = useState({
   sort: searchParams.get("sort") || "",
 });
 
-  useEffect(() => {
-  const city = searchParams.get("city");
-  const bedrooms = searchParams.get("bedrooms");
-
-  setFilters((prev) => ({
-    ...prev,
-    city: city || "",
-    bedrooms: bedrooms || "",
-  }));
-}, [searchParams]);
-
-  useEffect(() => {
-    fetchProperties();
-  }, [filters, page]);
-
   const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
@@ -80,7 +64,7 @@ const [filters, setFilters] = useState({
           }
         );
 
-        if (res.data && res.data.properties && res.data.properties.length > 0) {
+        if (res.data && Array.isArray(res.data.properties)) {
           setProperties(res.data.properties);
 
           setPagination({
@@ -90,7 +74,7 @@ const [filters, setFilters] = useState({
           });
           setIsUsingMockData(false);
         } else {
-          throw new Error("No properties returned from API");
+          throw new Error("Invalid response returned from API");
         }
       } catch (apiError) {
         console.warn("API Error, using mock data:", apiError.message);
@@ -108,6 +92,10 @@ const [filters, setFilters] = useState({
       setLoading(false);
     }
   }, [page, filters]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
 
   const handlePrevious = useCallback(() => {
     setPage((prev) => Math.max(prev - 1, 1));

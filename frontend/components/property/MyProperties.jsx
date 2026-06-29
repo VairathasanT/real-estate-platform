@@ -7,6 +7,7 @@ import Link from "next/link";
 export default function MyProperties() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [requiresLogin, setRequiresLogin] = useState(false);
 
   useEffect(() => {
     fetchMyProperties();
@@ -17,11 +18,11 @@ export default function MyProperties() {
       const res = await API.get("/properties/my");
       setProperties(res.data.properties || []);
     } catch (err) {
-      console.error(err);
-    //   alert(
-    //     err.response?.data?.message ||
-    //       "Failed to load properties."
-    //   );
+      if (err.response?.status === 401) {
+        setRequiresLogin(true);
+      } else {
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -55,6 +56,20 @@ export default function MyProperties() {
       <h2 className="text-center text-2xl font-semibold py-20">
         Loading Properties...
       </h2>
+    );
+  }
+
+  if (requiresLogin) {
+    return (
+      <div className="py-20 text-center">
+        <h2 className="text-2xl font-semibold">Please log in to view your properties.</h2>
+        <Link
+          href="/login"
+          className="mt-6 inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+        >
+          Go to Login
+        </Link>
+      </div>
     );
   }
 

@@ -2,17 +2,8 @@ const pool = require("../db/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-console.log("JWT_SECRET =", process.env.JWT_SECRET);
-console.log("JWT_REFRESH_SECRET =", process.env.JWT_REFRESH_SECRET);
-console.log("ACCESS_TOKEN_EXPIRE =", process.env.ACCESS_TOKEN_EXPIRE);
-console.log("REFRESH_TOKEN_EXPIRE =", process.env.REFRESH_TOKEN_EXPIRE);
-
 // TOKEN REFRESH HELPERS 
 const generateAccessToken = (user) => {
-  console.log("Creating Access Token...");
-  console.log("Secret:", process.env.JWT_SECRET);
-  console.log("Expires:", process.env.ACCESS_TOKEN_EXPIRE);
-
   return jwt.sign(
     {
       id: user.id,
@@ -26,10 +17,6 @@ const generateAccessToken = (user) => {
 };
 
 const generateRefreshToken = (user) => {
-  console.log("Creating Refresh Token...");
-  console.log("Secret:", process.env.JWT_REFRESH_SECRET);
-  console.log("Expires:", process.env.REFRESH_TOKEN_EXPIRE);
-
   return jwt.sign(
     {
       id: user.id,
@@ -47,9 +34,16 @@ const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    if (!name?.trim() || !email?.trim() || typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and a password of at least 8 characters are required",
+      });
+    }
+
     const existingUser = await pool.query(
       "SELECT * FROM users WHERE email = $1",
-      [email]
+      [email.trim().toLowerCase()]
     );
 
     if (existingUser.rows.length > 0) {
@@ -65,7 +59,7 @@ const register = async (req, res) => {
       `INSERT INTO users(name,email,password)
        VALUES($1,$2,$3)
        RETURNING id,name,email`,
-      [name, email, hashedPassword]
+      [name.trim(), email.trim().toLowerCase(), hashedPassword]
     );
 
     res.status(201).json({
@@ -89,9 +83,16 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email?.trim() || typeof password !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
     const result = await pool.query(
       "SELECT * FROM users WHERE email = $1",
-      [email]
+      [email.trim().toLowerCase()]
     );
 
     if (result.rows.length === 0) {
@@ -108,20 +109,12 @@ const login = async (req, res) => {
       user.password
     );
 
-    console.log("Password from request:", password);
-    console.log("Password match:", isMatch);
-
-
-
     if (!isMatch) {
       return res.status(400).json({
         success: false,
         message: "Invalid Email or Password",
       });
     }
-
-    console.log("ACCESS_TOKEN_EXPIRE =", process.env.ACCESS_TOKEN_EXPIRE);
-    console.log("REFRESH_TOKEN_EXPIRE =", process.env.REFRESH_TOKEN_EXPIRE);
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);

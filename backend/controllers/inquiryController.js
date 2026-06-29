@@ -5,9 +5,6 @@ const sendInquiry = async (req, res) => {
   try {
     const { property_id, message } = req.body;
     
-    console.log("Body:", req.body);
-    console.log("User:", req.user);
-
     // Validation
     if (!property_id || !message) {
       return res.status(400).json({

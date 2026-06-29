@@ -28,7 +28,9 @@ export default function FeaturedProperties() {
       setError(null);
       
       try {
-        const res = await API.get("/properties");
+        const res = await API.get("/properties/search/filter", {
+          params: { page: 1, limit: 3 },
+        });
 
         if (res.data && res.data.properties && res.data.properties.length > 0) {
           const featured = res.data.properties.slice(0, 3);

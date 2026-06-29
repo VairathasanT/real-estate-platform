@@ -1,5 +1,8 @@
 const pool = require("../db/db");
 
+const isPositiveNumber = (value) => Number.isFinite(Number(value)) && Number(value) > 0;
+const isNonNegativeInteger = (value) => Number.isInteger(Number(value)) && Number(value) >= 0;
+
 // CREATE PROPERTY
 const createProperty = async (req, res) => {
   try {
@@ -27,21 +30,21 @@ if (
   });
 }
 
-if (Number(price) <= 0) {
+if (!isPositiveNumber(price)) {
   return res.status(400).json({
     success: false,
     message: "Price must be greater than 0.",
   });
 }
 
-if (Number(bedrooms) < 0) {
+if (!isNonNegativeInteger(bedrooms)) {
   return res.status(400).json({
     success: false,
     message: "Bedrooms cannot be negative.",
   });
 }
 
-if (Number(sqft) <= 0) {
+if (!isPositiveNumber(sqft)) {
   return res.status(400).json({
     success: false,
     message: "Area must be greater than 0.",
@@ -84,6 +87,18 @@ if (Number(sqft) <= 0) {
 
 const getAllProperties = async (req, res) => {
   try {
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 12);
+
+    if (!Number.isInteger(page) || page < 1 ||
+        !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Page and limit must be positive integers; limit cannot exceed 100",
+      });
+    }
+
+    const offset = (page - 1) * limit;
     const query = `
       SELECT
         id,
@@ -99,13 +114,27 @@ const getAllProperties = async (req, res) => {
         created_at
       FROM properties
       ORDER BY id DESC
+      LIMIT $1 OFFSET $2
     `;
 
-    const result = await pool.query(query);
+    const [result, countResult] = await Promise.all([
+      pool.query(query, [limit, offset]),
+      pool.query("SELECT COUNT(*) AS total FROM properties"),
+    ]);
+    const totalRecords = Number(countResult.rows[0].total);
+    const totalPages = Math.ceil(totalRecords / limit);
 
     res.status(200).json({
       success: true,
       count: result.rows.length,
+      pagination: {
+        page,
+        limit,
+        totalRecords,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
       properties: result.rows,
     });
 
@@ -298,21 +327,21 @@ if (
   });
 }
 
-if (Number(price) <= 0) {
+if (!isPositiveNumber(price)) {
   return res.status(400).json({
     success: false,
     message: "Price must be greater than 0.",
   });
 }
 
-if (Number(bedrooms) < 0) {
+if (!isNonNegativeInteger(bedrooms)) {
   return res.status(400).json({
     success: false,
     message: "Bedrooms cannot be negative.",
   });
 }
 
-if (Number(sqft) <= 0) {
+if (!isPositiveNumber(sqft)) {
   return res.status(400).json({
     success: false,
     message: "Area must be greater than 0.",
@@ -384,8 +413,27 @@ const searchProperties = async (req, res) => {
       limit = 5,
     } = req.query;
 
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    if (!Number.isInteger(pageNumber) || pageNumber < 1 ||
+        !Number.isInteger(limitNumber) || limitNumber < 1 || limitNumber > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Page and limit must be positive integers; limit cannot exceed 100",
+      });
+    }
+
+    const numericFilters = [bedrooms, minPrice, maxPrice].filter(
+      (value) => value !== undefined && value !== ""
+    );
+
+    if (numericFilters.some((value) => !Number.isFinite(Number(value)))) {
+      return res.status(400).json({
+        success: false,
+        message: "Numeric filters contain an invalid value",
+      });
+    }
     const offset = (pageNumber - 1) * limitNumber;
 
     let query = `
